@@ -13,6 +13,9 @@ Miuzei 10 Pcs Sg90 9g Micro Servo Metal Gear servo motor kit
     Rotating direction:Counter Clockwise (500-2500μsec)
     Pulse width range:500-2500μsec
     Maximum travel:About 180° (500-2500 μsec)
+
+    product:
+    https://www.amazon.com/Micro-Helicopter-Airplane-Remote-Control/dp/B072V529YD
     */
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
@@ -101,21 +104,8 @@ void loop() {
   }
   delay(500);
 // pwm.setPWM(servonum,0, SERVOMIN);
-
 //   delay(50);
 
-  // Drive each servo one at a time using writeMicroseconds(), it's not precise due to calculation rounding!
-  // The writeMicroseconds() function is used to mimic the Arduino Servo library writeMicroseconds() behavior. 
-//   for (uint16_t microsec = USMIN; microsec < USMAX; microsec++) {
-//     pwm.writeMicroseconds(servonum, microsec);
-//   }
-
-//   delay(500);
-//   for (uint16_t microsec = USMAX; microsec > USMIN; microsec--) {
-//     pwm.writeMicroseconds(servonum, microsec);
-//   }
-
-//   delay(500);
 
   servonum++;
   if (servonum > 3) servonum = 0; // Testing the first 8 servo channels
