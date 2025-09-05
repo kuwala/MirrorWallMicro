@@ -38,7 +38,9 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 #define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
 
 // our servo # counter
-uint8_t servonum = 0;
+uint8_t servoNum = 8;
+uint8_t const servoStartNum = 8; // start on servo 8 then have servonum of servos
+uint8_t const servoNumMax = 16; // once reached servo num max reset the servoNum to servoStartNum
 
 void setup() {
   Serial.begin(9600);
@@ -85,28 +87,41 @@ void setServoPulse(uint8_t n, double pulse) {
 
 void loop() {
 //   // Drive each servo one at a time using setPWM()
-  if(servonum==3) {
-	servonum = 15;
+  if(servoNum==servoNumMax) {
+	servoNum = servoStartNum;
   }
-  Serial.println(servonum);
+  Serial.println(servoNum);
   for (uint16_t pulselen = SERVOMIN; pulselen < SERVOMAX; pulselen++) {
-    pwm.setPWM(servonum, 0, pulselen);
+    pwm.setPWM(servoNum, 0, pulselen);
    // delayMicroseconds(100);
    // delay(1);
+    if(servoNum == 8 || servoNum == 9) {
+      // delay(100);
+      Serial.println(pulselen);
+    }
   }
-  delay(500);
+  delay(100);
 
   //delay(1000);
   for (uint16_t pulselen = SERVOMAX; pulselen > SERVOMIN; pulselen--) {
-    pwm.setPWM(servonum, 0, pulselen);
+    pwm.setPWM(servoNum, 0, pulselen);
+    if(servoNum == 8 || servoNum == 9) {
+      // delay(10);
+    }
 //     delay(1);
     //delayMicroseconds(100);
   }
-  delay(500);
-// pwm.setPWM(servonum,0, SERVOMIN);
+  if(servoNum == 8 || servoNum == 9) {
+    // pwm.setPWM
+    pwm.setPWM(servoNum, 0, (uint16_t)1400);
+    Serial.println("-------------------------");
+
+  }
+  delay(100);
+// pwm.setPWM(servoNum,0, SERVOMIN);
 //   delay(50);
 
 
-  servonum++;
-  if (servonum > 3) servonum = 0; // Testing the first 8 servo channels
+  servoNum++;
+  // if (servoNum > 3) servoNum = 0; // Testing the first 8 servo channels
 }
