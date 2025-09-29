@@ -19,7 +19,7 @@ void setup() {
   String portName = Serial.list()[3];
   print("\n\nConnecting to serial on: ");
   println(portName);
-  sPort = new Serial(this, portName, 9600);
+  sPort = new Serial(this, portName, 115200);
   
 }
 

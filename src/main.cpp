@@ -146,7 +146,7 @@ void updateServosFromGrid() {
 
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.println("8 channel Servo test!");
 
   pwm.begin();
@@ -216,16 +216,18 @@ void loop() {
   //   Serial.println("time step happened");
   // } 
   //get serial values
-  if(Serial.available()>= 4) {
-    for(int i = 0; i < 4; i ++) {
+  if(Serial.available()>= rows * cols) {
+    for(int i = 0; i < rows * cols; i ++) {
       byte b = Serial.read();
-      servoBytes[0][i] = b;
+      int x = i % cols;
+      int y = i / rows;
+      servoBytes[x][y] = b;
       Serial.print("byte: ");
       Serial.println((int)b);
       if(b == 49) { // 1
-        setServoTargetTo(i,0, SERVOMIN);
+        setServoTargetTo(x,y, SERVOMIN);
       } else if (b==50) { // 2
-        setServoTargetTo(i,0, SERVOMAX);
+        setServoTargetTo(x,y, SERVOMAX);
       }
     }
   }

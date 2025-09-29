@@ -102,3 +102,7 @@ update servos
 
 // what are some options for deserializing data bytes
 receive serial bytes 0-180 in value and map those to servo positions
+
+## 09/28/25 Monday
+- update code to work with all 32 servos
+-
