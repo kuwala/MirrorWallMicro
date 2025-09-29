@@ -1,19 +1,24 @@
 import processing.serial.*;
 
 Serial sPort;
-int numPixels = 32;
-int squareSize = 32; // 32 pixels
-int[] pixelGrid = new int[numPixels];
 int cols = 8;
 int rows = 4;
+int numPixels = cols * rows;
+int squareSize = 32; // 32 pixels
+int[] pixelGrid = new int[numPixels];
+
 boolean buttonColorToggle = false;
 void setup() {
   size(600,600);
   noStroke();
   
+  // show serial devices
   printArray(Serial.list());
   
-  String portName = Serial.list()[4];
+  //connect to one
+  String portName = Serial.list()[3];
+  print("\n\nConnecting to serial on: ");
+  println(portName);
   sPort = new Serial(this, portName, 9600);
   
 }
@@ -41,7 +46,7 @@ void draw() {
   text("send pixels",32+ 8, 32 * 5 );
 }
 
-void mouseClicked() {
+void mouseReleased() {
   // find rect the mouse clicked on
   int col = mouseX / squareSize;
   int row = mouseY / squareSize;
@@ -55,8 +60,17 @@ void mouseClicked() {
       pixelGrid[i] = 0;
     }
   }
+  // check if button was clicked then send serial
   if( mouseX > 32 && mouseX < 32+96 && mouseY > (32*5 - 16) && mouseY < (32*5 +16)) {
     buttonColorToggle = !buttonColorToggle;
+    
+    for(int i = 0; i < numPixels; i ++) {
+      if(pixelGrid[i] == 0) {
+        sPort.write("1");
+      } else {
+        sPort.write("2");
+      }
+    }
   }
 
   

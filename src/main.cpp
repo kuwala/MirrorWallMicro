@@ -43,13 +43,8 @@ Adafruit_PWMServoDriver pwm2 = Adafruit_PWMServoDriver(0x41);
 
 #define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
 
-// our servo # counter
-uint8_t servoNum = 8;
-uint8_t const servoStartNum = 8; // start on servo 8 then have servonum of servos
-uint8_t const servoNumMax = 16; // once reached servo num max reset the servoNum to servoStartNum
-
-int const rows = 2;
-int const cols = 16;
+int const rows = 4;
+int const cols = 8;
 uint16_t servoValues[rows][cols]; // current values to set this update loop
 uint16_t servoLast[rows][cols];
 uint16_t servoTargets[rows][cols];
@@ -227,10 +222,10 @@ void loop() {
       servoBytes[0][i] = b;
       Serial.print("byte: ");
       Serial.println((int)b);
-      if(b == 49) {
-        setServoTargetTo(0,0, SERVOMIN);
-      } else if (b==50) {
-        setServoTargetTo(0,0, SERVOMAX);
+      if(b == 49) { // 1
+        setServoTargetTo(i,0, SERVOMIN);
+      } else if (b==50) { // 2
+        setServoTargetTo(i,0, SERVOMAX);
       }
     }
   }
