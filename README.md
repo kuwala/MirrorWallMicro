@@ -105,4 +105,7 @@ receive serial bytes 0-180 in value and map those to servo positions
 
 ## 09/28/25 Monday
 - update code to work with all 32 servos
--
+- prep for connecting to the 32 servo board
+
+
+What couldbe the problem to getting the serial after 4 bytes ignored .... hmm 

@@ -50,7 +50,7 @@ uint16_t servoLast[rows][cols];
 uint16_t servoTargets[rows][cols];
 
 byte servoBytes[rows][cols]; // read from serial
-int const stepMin = 30; // if the servoTarget - servoValue is less then stepMin servoValue = servo Target
+int const stepMin = 30; // if the servoTarget - servoValue is less then stepMin: servoValue = servo Target
 
 unsigned long stepTimer = 0;
 int stepCount = 0;

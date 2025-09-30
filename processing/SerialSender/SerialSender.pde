@@ -72,7 +72,12 @@ void mouseReleased() {
       }
     }
   }
-
   
+}
+
+void serialEvent(Serial sPort) {
+  int inByte = sPort.read();
+  
+  print((char)inByte);
   
 }
