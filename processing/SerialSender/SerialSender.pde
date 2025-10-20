@@ -1,8 +1,8 @@
 import processing.serial.*;
 
 Serial sPort;
-int cols = 8;
 int rows = 4;
+int cols = 8;
 int numPixels = cols * rows;
 int squareSize = 32; // 32 pixels
 int[] pixelGrid = new int[numPixels];
@@ -41,9 +41,9 @@ void draw() {
   } else {
     fill(200);
   }
-  rect(32, 32*5 - 16, 96, 32);
+  rect(32, 32*(rows+1) - 16, 96, 32);
   fill(64);
-  text("send pixels",32+ 8, 32 * 5 );
+  text("send pixels",32+ 8, 32 * (rows+1) );
 }
 
 void mouseReleased() {
@@ -61,7 +61,7 @@ void mouseReleased() {
     }
   }
   // check if button was clicked then send serial
-  if( mouseX > 32 && mouseX < 32+96 && mouseY > (32*5 - 16) && mouseY < (32*5 +16)) {
+  if( mouseX > 32 && mouseX < 32+96 && mouseY > (32*(rows+1) - 16) && mouseY < (32*(rows+1) +16)) {
     buttonColorToggle = !buttonColorToggle;
     
     for(int i = 0; i < numPixels; i ++) {

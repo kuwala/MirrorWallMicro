@@ -1,28 +1,22 @@
-/* Servo
-Miuzei 10 Pcs Sg90 9g Micro Servo Metal Gear servo motor kit
+/* TowerPro SG92R Servos - pulse calculations
+the period is 20ms, high level time 0.5~2.5ms 
+50hz = 20,000uS
+12bit = 2^12 = 4096 increments
+20,000 / 4096 = 4.88uS per increment
 
-180 Degree Servo Motor Control Specification：
-
-    Control system:Change the pulse width
-    Amplifier type:Digital controller
-    Operating travl:180° (500-2500 μsec)
-    Left&Right travelling Angle deviation:≤ 6°
-    Centering deviation:≤ 1°
-    Neutral position:1500 μsec
-    Dead band width:5 μsec
-    Rotating direction:Counter Clockwise (500-2500μsec)
-    Pulse width range:500-2500μsec
-    Maximum travel:About 180° (500-2500 μsec)
-
-    product:
-    https://www.amazon.com/Micro-Helicopter-Airplane-Remote-Control/dp/B072V529YD
-    */
+minimum 500us / 4.88uS = 102.44
+maximum 2500us / 4.88uS = 512.29
+// from https://forums.adafruit.com/viewtopic.php?t=96423
+*/
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
 
 // called this way, it uses the default address 0x40
-Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver(0x40);
-Adafruit_PWMServoDriver pwm2 = Adafruit_PWMServoDriver(0x41);
+// Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver(0x40);
+// Adafruit_PWMServoDriver pwm2 = Adafruit_PWMServoDriver(0x41);
+int const numPWMBoards = 16;
+Adafruit_PWMServoDriver pwmBoards[numPWMBoards];
+
 // you can also call it with a different address you want
 //Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver(0x41);
 // you can also call it with a different address and I2C interface
@@ -36,8 +30,12 @@ Adafruit_PWMServoDriver pwm2 = Adafruit_PWMServoDriver(0x41);
 // #define SERVOMAX  580 // This is the 'maximum' pulse length count (out of 4096)
 // #define SERVOMIN  10 // This is the 'minimum' pulse length count (out of 4096)
 // #define SERVOMAX  580 // This is the 'maximum' pulse length count (out of 4096)
-#define SERVOMIN  110 // This is the 'minimum' pulse length count (out of 4096)
+
+#define SERVOMIN  100 // This is the 'minimum' pulse length count (out of 4096)
 #define SERVOMAX  500 // This is the 'maximum' pulse length count (out of 4096)
+
+// #define SERVOMIN  130 // This is the 'minimum' pulse length count (out of 4096)
+// #define SERVOMAX  480 // This is the 'maximum' pulse length count (out of 4096)
 #define USMIN  600 // This is the rounded 'minimum' microsecond length based on the minimum pulse of 150
 #define USMAX  2400 // This is the rounded 'maximum' microsecond length based on the maximum pulse of 600
 
@@ -45,9 +43,9 @@ Adafruit_PWMServoDriver pwm2 = Adafruit_PWMServoDriver(0x41);
 
 int const rows = 4;
 int const cols = 8;
-uint16_t servoValues[rows][cols]; // current values to set this update loop
-uint16_t servoLast[rows][cols];
-uint16_t servoTargets[rows][cols];
+uint8_t servoValues[rows][cols]; // current values to set this update loop
+uint8_t servoLast[rows][cols];
+uint8_t servoTargets[rows][cols];
 
 byte servoBytes[rows][cols]; // read from serial
 int const stepMin = 30; // if the servoTarget - servoValue is less then stepMin: servoValue = servo Target
@@ -55,6 +53,8 @@ int const stepMin = 30; // if the servoTarget - servoValue is less then stepMin:
 unsigned long stepTimer = 0;
 int stepCount = 0;
 unsigned long pwmUpdateTimer = 0;
+
+uint8_t bigSerialBufferRx [rows*cols+16];
 
 void setServoTargetTo(uint16_t servoX, uint16_t servoY, uint16_t value) {
   if (value > SERVOMAX) {
@@ -105,52 +105,87 @@ void updateServos() {
     for(int j = 0; j < cols; j++) {
       // only update if different from last update
       if(servoLast[i][j] != servoValues[i][j]) {
+            Serial.print("pushing to servo. Y: ");
+            Serial.print(i);
+            Serial.print(" X: ");
+            Serial.println(j);
         switch(i) {
           case 0:
-            pwm.setPWM(j, 0, servoValues[i][j]);
+            // pwm.setPWM(j, 0, servoValues[i][j]);
+            pwmBoards[0].setPWM(j, 0, servoValues[i][j]);
             break;
           case 1:
-            pwm.setPWM(8+j, 0, servoValues[i][j]);
+            // pwm.setPWM(8+j, 0, servoValues[i][j]);
+            pwmBoards[0].setPWM(8+j, 0, servoValues[i][j]);
             break;
           case 2:
-            pwm2.setPWM(j, 0, servoValues[i][j]);
+            // pwm2.setPWM(j, 0, servoValues[i][j]);
+            pwmBoards[1].setPWM(j, 0, servoValues[i][j]);
             break;
           case 3:
-            pwm2.setPWM(8+j, 0, servoValues[i][j]);
+            // pwm2.setPWM(8+j, 0, servoValues[i][j]);
+            pwmBoards[1].setPWM(8+j, 0, servoValues[i][j]);
             break;
+            
           default:
           Serial.print("strange pwm index - ignoring update");
         }
+      } else {
+            // Serial.print("Ignoring same as last push to servo. Y: ");
+            // Serial.print(i);
+            // Serial.print(" X: ");
+            // Serial.println(j);
+
       }
+      // Serial.print(".");
     }
   }
 }
 
 // dont use
-void updateServosFromGrid() {
-  for(int i = 0; i < rows; i ++) {
-    for(int j = 0; j < cols; j++) {
+// void updateServosFromGrid() {
+//   for(int i = 0; i < rows; i ++) {
+//     for(int j = 0; j < cols; j++) {
       
-      Serial.print("-");
-      if(i == 0) {
-        Serial.print("S.");
-        pwm.setPWM(j, 0, servoValues[i][j]);
-      } else if (i == 1) {
-        Serial.print("S2.");
-        pwm2.setPWM(j, 0, servoValues[i][j]);
-      }
+//       Serial.print("-");
+//       if(i == 0) {
+//         Serial.print("S.");
+//         pwm.setPWM(j, 0, servoValues[i][j]);
+//       } else if (i == 1) {
+//         Serial.print("S2.");
+//         pwm.setPWM(j+8, 0, servoValues[i][j]);
+//       } else if (i == 2) {
+//         pwm2.setPWM(j, 0, servoValues[i][j]);
+//       } else if (i == 3) {
+//         pwm2.setPWM(j+8, 0, servoValues[i][j]);
+//       }
 
-    }
-  }
-}
+//     }
+//   }
+// }
 
 
 void setup() {
+  //init the pwm boards
+  for(int i=0;i<numPWMBoards;i++) {
+    pwmBoards[i] = Adafruit_PWMServoDriver(0x40+i);
+    pwmBoards[i].begin();
+    pwmBoards[i].setOscillatorFrequency(27000000);
+    pwmBoards[i].setPWMFreq(SERVO_FREQ);  // Analog servos run at ~50 Hz updates
+  }
   Serial.begin(115200);
+  // I think this  would work if I had a hardware serial connection. But the regular Serial is only for USB serial
+  // HardwareSerialIMXRT.addMemoryForRead(&bigSerialBufferRx, sizeof(bigSerialBufferRx));
+  // Serial1.addMemoryForRead(&bigSerialBufferRx, sizeof(bigSerialBufferRx));
   Serial.println("8 channel Servo test!");
 
-  pwm.begin();
-  pwm2.begin();
+  // pwm.begin();
+  // pwm2.begin();
+
+  // pwm.setOscillatorFrequency(27000000);
+  // pwm.setPWMFreq(SERVO_FREQ);  // Analog servos run at ~50 Hz updates
+  // pwm2.setOscillatorFrequency(27000000);
+  // pwm2.setPWMFreq(SERVO_FREQ);  // Analog servos run at ~50 Hz updates
   /*
    * In theory the internal oscillator (clock) is 25MHz but it really isn't
    * that precise. You can 'calibrate' this by tweaking this number until
@@ -167,16 +202,13 @@ void setup() {
    * affects the calculations for the PWM update frequency. 
    * Failure to correctly set the int.osc value will cause unexpected PWM results
    */
-  pwm.setOscillatorFrequency(27000000);
-  pwm.setPWMFreq(SERVO_FREQ);  // Analog servos run at ~50 Hz updates
-  pwm2.setOscillatorFrequency(27000000);
-  pwm2.setPWMFreq(SERVO_FREQ);  // Analog servos run at ~50 Hz updates
 
   delay(10);
 }
 
 // You can use this function if you'd like to set the pulse length in seconds
 // e.g. setServoPulse(0, 0.001) is a ~1 millisecond pulse width. It's not precise!
+// setServoPulse is not used
 double setServoPulse(uint8_t n, double pulse) {
   double pulselength;
   
@@ -217,13 +249,18 @@ void loop() {
   // } 
   //get serial values
   if(Serial.available()>= rows * cols) {
+    Serial.println("serial received, reading starting");
     for(int i = 0; i < rows * cols; i ++) {
       byte b = Serial.read();
       int x = i % cols;
-      int y = i / rows;
-      servoBytes[x][y] = b;
+      int y = i / cols;
+      // servoBytes[y][x] = b; // ??
       Serial.print("byte: ");
-      Serial.println((int)b);
+      Serial.print((int)b);
+      Serial.print("x: ");
+      Serial.print(x);
+      Serial.print("y: ");
+      Serial.println(y);
       if(b == 49) { // 1
         setServoTargetTo(x,y, SERVOMIN);
       } else if (b==50) { // 2
@@ -231,6 +268,7 @@ void loop() {
       }
     }
   }
+
   if (millis() - pwmUpdateTimer > 10) {
     calculateNewServoValuesFromTargets();
     pwmUpdateTimer = millis();
@@ -244,11 +282,23 @@ void loop() {
   // Serial.println("starting loop");
   // setAllServoGridTo(SERVOMIN);
   // updateServosFromGrid();
-  // delay(400);
+  // delay(1200);
   // Serial.println("mid loop");
   // setAllServoGridTo(SERVOMAX);
   // updateServosFromGrid();
-  // delay(400);
+  // delay(1200);
+
+  // POWER TEST TWO
+  // for(int i = 0; i < 16; i++) {
+  //   pwm.setPWM(i, 0, SERVOMIN);
+  //   delay(200);
+  // }
+  // delay(2000);
+  // for(int i = 0; i < 16; i++) {
+  //   pwm.setPWM(i, 0, SERVOMAX);
+  //   delay(200);
+  // }
+  // delay(1000);
 
   // Code for sprinkler effect
   /*

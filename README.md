@@ -109,3 +109,55 @@ receive serial bytes 0-180 in value and map those to servo positions
 
 
 What couldbe the problem to getting the serial after 4 bytes ignored .... hmm 
+
+## 09/30/25
+
+## 10/01/25
+calibrateing the servo pwm driver pulses
+https://learn.adafruit.com/calibrating-sensors/two-point-calibration
+https://forums.adafruit.com/viewtopic.php?t=96423
+* there maybe up to a 5% difference between the individual pwm driver boards
+
+- trouble shoot encodings
+- test to get a bunch more servos going.
+- maybe trouble shoot the a frame buzzing or humming
+
+So the problem seems to be that only a few of the servos are being set correctly.
+it could be an issue with the x and y being mixed up or my switch case.
+
+So what do we need to prepare to make the bigger version.
+
+```bash
+Semiconductors, especially the relatively delicate pins of digital ICs, cannot sink an infinite amount of current. Please take a look at the official I2C specification from NXP. 3 mA for Standard-mode and Fast-mode, or 20 mA for Fast-mode Plus. 
+
+https://www.nxp.com/docs/en/user-guide/UM10204.pdf
+
+For achieving longer distance without using buffers, it is possible to use series termination resistors to slow down the edge rate and reduce ringing. The I2C specification calls them "series protection resistors". I had success with using 330 ohms for series and 3.3k for pull-ups for a 3.3V I2C bus less than 5 feet while running at a relatively slow speed of 10 kHz. Your mileage will vary depending on the type of cable used.
+
+I2C is designed for communication between ICs on a single board or boards stacked on top of each other, not for boards connected by long wires. For long distances, you'll need some sort of buffer or redriver.
+```
+
+## 10/11/25
+All the parts arrived a few days ago and I picked up some female headers
+Some Tasks
+- [ ] mount all the motors
+- [ ] solder a test batch of pwm boards (boards + extention wire    x)
+
+## (sometime) work log
+- went to store to buy supplies (45 mins?)
+- mounted ~30 + motors (3hrs) (my estimate its going to take 20 hours to install all the motors)
+- built frame (2-3 hrs)
+
+1hr
+- soldered 4 boards 
+- made 3 i2c cables, soldered to boards
+## 10/18/25
+- build the arduino shield (?)
+- solder stemma cable to shield (or wait, just use 2 sets of 2 header pins)
+- daisy chain from i2c extender to the 4 pwm boards
+- test and reset the motors
+- put on horns on the motors
+- install many more motors
+
+- work on code to play an animation of png files and send serial data
+
