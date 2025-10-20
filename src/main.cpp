@@ -41,13 +41,37 @@ Adafruit_PWMServoDriver pwmBoards[numPWMBoards];
 
 #define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
 
-int const rows = 4;
+int const rows = 8;
 int const cols = 8;
-uint8_t servoValues[rows][cols]; // current values to set this update loop
-uint8_t servoLast[rows][cols];
-uint8_t servoTargets[rows][cols];
+int const rowsPerBoard = 2;
+int const colsPerBoard = 8;
+uint16_t servoValues[rows][cols]; // current values to set this update loop
+uint16_t servoLast[rows][cols];
+uint16_t servoTargets[rows][cols];
+uint16_t servoSerialBuffer[rows][cols];
 
 byte servoBytes[rows][cols]; // read from serial
+
+// with board mapping you can convert a x,y servo positon
+// to pwmBoardNumber. 
+// first boardX = floor(x/colsPerBoard);
+// then boardY = floor(y/rowsPerBoard);
+uint8_t boardMap[12][3] = {
+  {0, 4, 8},
+  {1, 5, 9},
+  {2, 6, 10},
+  {3, 7, 11},
+  {12, 16, 20},
+  {13, 17, 21},
+  {14, 18, 22},
+  {15, 19, 23},
+  {24, 28, 32},
+  {25, 29, 33},
+  {26, 30, 34},
+  {27, 31, 35},
+};
+
+// servo update step
 int const stepMin = 30; // if the servoTarget - servoValue is less then stepMin: servoValue = servo Target
 
 unsigned long stepTimer = 0;
@@ -105,31 +129,35 @@ void updateServos() {
     for(int j = 0; j < cols; j++) {
       // only update if different from last update
       if(servoLast[i][j] != servoValues[i][j]) {
-            Serial.print("pushing to servo. Y: ");
+            Serial.print("pushing changed pwm to servo. Y: ");
             Serial.print(i);
             Serial.print(" X: ");
-            Serial.println(j);
-        switch(i) {
-          case 0:
-            // pwm.setPWM(j, 0, servoValues[i][j]);
-            pwmBoards[0].setPWM(j, 0, servoValues[i][j]);
-            break;
-          case 1:
-            // pwm.setPWM(8+j, 0, servoValues[i][j]);
-            pwmBoards[0].setPWM(8+j, 0, servoValues[i][j]);
-            break;
-          case 2:
-            // pwm2.setPWM(j, 0, servoValues[i][j]);
-            pwmBoards[1].setPWM(j, 0, servoValues[i][j]);
-            break;
-          case 3:
-            // pwm2.setPWM(8+j, 0, servoValues[i][j]);
-            pwmBoards[1].setPWM(8+j, 0, servoValues[i][j]);
-            break;
+            Serial.print(j);
+            uint8_t boardNum = boardMap[(int)(i/rowsPerBoard)][(int)(j/colsPerBoard)];
+            Serial.print(" BoardNum: "); Serial.println(boardNum);
+            uint8_t servoNum = j%colsPerBoard + (i%rowsPerBoard)*colsPerBoard;
+            pwmBoards[boardNum].setPWM(servoNum, 0, servoValues[i][j]);
+        // switch(i) {
+        //   case 0:
+        //     // pwm.setPWM(j, 0, servoValues[i][j]);
+        //     pwmBoards[0].setPWM(j, 0, servoValues[i][j]);
+        //     break;
+        //   case 1:
+        //     // pwm.setPWM(8+j, 0, servoValues[i][j]);
+        //     pwmBoards[0].setPWM(8+j, 0, servoValues[i][j]);
+        //     break;
+        //   case 2:
+        //     // pwm2.setPWM(j, 0, servoValues[i][j]);
+        //     pwmBoards[1].setPWM(j, 0, servoValues[i][j]);
+        //     break;
+        //   case 3:
+        //     // pwm2.setPWM(8+j, 0, servoValues[i][j]);
+        //     pwmBoards[1].setPWM(8+j, 0, servoValues[i][j]);
+        //     break;
             
-          default:
-          Serial.print("strange pwm index - ignoring update");
-        }
+        //   default:
+        //   Serial.print("strange pwm index - ignoring update");
+        // }
       } else {
             // Serial.print("Ignoring same as last push to servo. Y: ");
             // Serial.print(i);
@@ -247,27 +275,86 @@ void loop() {
   //   stepTimer = millis();
   //   Serial.println("time step happened");
   // } 
-  //get serial values
-  if(Serial.available()>= rows * cols) {
-    Serial.println("serial received, reading starting");
-    for(int i = 0; i < rows * cols; i ++) {
-      byte b = Serial.read();
-      int x = i % cols;
-      int y = i / cols;
-      // servoBytes[y][x] = b; // ??
-      Serial.print("byte: ");
-      Serial.print((int)b);
-      Serial.print("x: ");
-      Serial.print(x);
-      Serial.print("y: ");
-      Serial.println(y);
-      if(b == 49) { // 1
-        setServoTargetTo(x,y, SERVOMIN);
-      } else if (b==50) { // 2
-        setServoTargetTo(x,y, SERVOMAX);
+  // Do the special Serial!
+  if(Serial.available()>= 17) { // 17 bytes per data packet
+    Serial.println("serial bytes received, reading starting");
+    uint8_t header = Serial.read();
+    Serial.print("Header: ");
+    Serial.println(header);
+    uint16_t pwmBoardNum = 0;
+    if(header <= numPWMBoards) {
+      pwmBoardNum = header;
+      for(int i = 0; i < 16; i ++) {
+        byte b = Serial.read();
+        int x = i % 8;
+        int y = floor(i / 8) + pwmBoardNum*2;
+        // servoBytes[y][x] = b; // ??
+        Serial.print("byte: ");
+        Serial.print((int)b);
+        Serial.print(" x: ");
+        Serial.print(x);
+        Serial.print(" y: ");
+        Serial.println(y);
+
+        uint16_t value;
+        if(b == 49) { // 1
+          value = SERVOMIN;
+        } else if (b==50) { // 2
+          value = SERVOMAX;
+        } else {
+          value = SERVOMIN;
+          Serial.println(" * * * * * * * * * * * * * * * * * * * * * * * * ");
+          Serial.println(" * * * * known value received via serial * * * * ");
+          Serial.println(" * * * * * * * * * * * * * * * * * * * * * * * * ");
+        }
+
+        servoSerialBuffer[y][x] = value;
+        // servoTargets[y][x] = value;
+
       }
+    } else if(header == 255) {
+      // set receivedSerial to revoTarget
+      // discard next 16 bytes
+      for(int i = 0; i < 16; i ++) {
+        Serial.read();
+      }
+      Serial.print("Drawing Buffered Serial Data");
+      for(int y = 0; y < rows; y ++) {
+        for(int x = 0; x < cols; x++) {
+          servoTargets[y][x] = servoSerialBuffer[y][x];
+        }
+        Serial.print(".");
+      }
+      Serial.println("done.");
+
+    } else {
+      Serial.println("Invalid Header Byte Received");
     }
+
   }
+
+  //get serial values
+  // this old method only works up to 64 bytes. the size of the buffer
+  // if(Serial.available()>= rows * cols) {
+  //   Serial.println("serial received, reading starting");
+  //   for(int i = 0; i < rows * cols; i ++) {
+  //     byte b = Serial.read();
+  //     int x = i % cols;
+  //     int y = i / cols;
+  //     // servoBytes[y][x] = b; // ??
+  //     Serial.print("byte: ");
+  //     Serial.print((int)b);
+  //     Serial.print("x: ");
+  //     Serial.print(x);
+  //     Serial.print("y: ");
+  //     Serial.println(y);
+  //     if(b == 49) { // 1
+  //       setServoTargetTo(x,y, SERVOMIN);
+  //     } else if (b==50) { // 2
+  //       setServoTargetTo(x,y, SERVOMAX);
+  //     }
+  //   }
+  // }
 
   if (millis() - pwmUpdateTimer > 10) {
     calculateNewServoValuesFromTargets();

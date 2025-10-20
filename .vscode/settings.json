@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "*.bkcpp": "cpp"
+        "*.bkcpp": "cpp",
+        "cmath": "cpp"
     }
 }
