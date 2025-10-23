@@ -6,35 +6,6 @@ int camHeight = 640;
 int camWidth = 480;
 
 
-void doCameraUpdates()
-{
-  background(22);
-  // read frames
-  camera.readFrames();
-  // read depth buffer
-  short[][] data = camera.getDepthData();
-  noFill();
-  strokeWeight(1.0);
-  // use it to display circles
-  for (int y = 0; y < camHeight; y += 20) {
-    for (int x = 160; x < camWidth; x += 20) {
-      //if(y < height && width < width) {
-      // get intensity
-      int intensity = data[y][x];
-      // map intensity (values between 0-65536)
-      float d = map(intensity, 0, 3000, 20, 0);
-      float c = map(intensity, 0, 3000, 255, 0);
-      d = constrain(d, 0, 16);
-      c = constrain(c, 0, 255);
-      if (d > 9) {
-      stroke(c, 255, 255);
-      circle(x, y, d);
-      }
-     // }
-    }
-  }
-}
-
 
 
 Serial sPort;
@@ -57,7 +28,7 @@ void setup() {
   pixelDensity(2);
   size(900,600);
 
-  camera.enableDepthStream(camWidth, camHeight);
+  camera.enableDepthStream(640,480);
   camera.start();
   
   noStroke();
@@ -66,7 +37,7 @@ void setup() {
   printArray(Serial.list());
   
   //connect to one
-  String portName = Serial.list()[3];
+  String portName = Serial.list()[0];
   print("\n\nConnecting to serial on: ");
   println(portName);
   sPort = new Serial(this, portName, 115200);
@@ -74,6 +45,7 @@ void setup() {
 }
 
 void draw() {
+  
   background(0);
   fill(127);
   for(int i = 0; i < numPixels; i ++) {
@@ -139,6 +111,37 @@ void draw() {
 
   }
 }
+
+void doCameraUpdates()
+{
+  background(22);
+  // read frames
+  camera.readFrames();
+  // read depth buffer
+  short[][] data = camera.getDepthData();
+  noFill();
+  strokeWeight(1.0);
+  // use it to display circles
+  for (int y = 0; y < camHeight; y += 20) {
+    for (int x = 160; x < camWidth; x += 20) {
+      //if(y < height && width < width) {
+      // get intensity
+      int intensity = data[y][x];
+      // map intensity (values between 0-65536)
+      float d = map(intensity, 0, 3000, 20, 0);
+      float c = map(intensity, 0, 3000, 255, 0);
+      d = constrain(d, 0, 16);
+      c = constrain(c, 0, 255);
+      if (d > 9) {
+      stroke(c, 255, 255);
+      circle(x, y, d);
+      }
+     // }
+    }
+  }
+}
+
+
 
 void sendPixelsOverSerial() {
     
