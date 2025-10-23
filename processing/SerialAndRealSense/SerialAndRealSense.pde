@@ -14,7 +14,7 @@ int cols = 24;
 int numPixels = cols * rows;
 int squareSize = 32; // 32 pixels
 int[] pixelGrid = new int[numPixels];
-int[][] pixelGrid2D = new int[rows][cols]; // y,x
+// int[][] pixelGrid2D = new int[rows][cols]; // y,x
 
 boolean buttonColorToggle = false;
 
@@ -63,6 +63,7 @@ void draw() {
   } else {
     fill(200);
   }
+  // The buttons!
   rect(32, 32*(rows+1) - 16, 96, 32); // send serial button
   rect(32 + (32+64+32), 32*(rows+1) - 16, 96, 32); // test pattern button
   rect(32 + (32+64+32)*2, 32*(rows+1) - 16, 96, 32); // test pattern button
@@ -133,8 +134,11 @@ void doCameraUpdates()
       d = constrain(d, 0, 16);
       c = constrain(c, 0, 255);
       if (d > 9) {
-      stroke(c, 255, 255);
-      circle(x, y, d);
+        stroke(c, 255, 255);
+        circle(x, y, d);
+        pixelGrid[y*cols + x] = 1;
+      } else {
+        pixelGrid[y*cols + x] = 0;
       }
      // }
     }
@@ -230,6 +234,14 @@ void mouseReleased() {
     } else {
       appState = 0;
     }
+  }
+  if( mouseX > 32+(32+96)*2 && mouseX < 32+96 + (32+96)*2 && mouseY > (32*(rows+1) - 16) && mouseY < (32*(rows+1) +16)) {
+    if(appState != 2) {
+        appState = 2;
+    } else {
+        appState = 0;
+    }
+
   }
   
 }
