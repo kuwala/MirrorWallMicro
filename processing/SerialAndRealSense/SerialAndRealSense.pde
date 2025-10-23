@@ -2,8 +2,8 @@ import ch.bildspur.realsense.*;
 import processing.serial.*;
 
 RealSenseCamera camera = new RealSenseCamera(this);
-int camHeight = 640;
-int camWidth = 480;
+int camWidth = 640;
+int camHeight = 480;
 
 
 
@@ -124,7 +124,7 @@ void doCameraUpdates()
   strokeWeight(1.0);
   // use it to display circles
   for (int y = 0; y < camHeight; y += 20) {
-    for (int x = 160; x < camWidth; x += 20) {
+    for (int x = 0; x < camWidth-160; x += 20) {
       //if(y < height && width < width) {
       // get intensity
       int intensity = data[y][x];
@@ -136,9 +136,19 @@ void doCameraUpdates()
       if (d > 9) {
         stroke(c, 255, 255);
         circle(x, y, d);
-        pixelGrid[y*cols + x] = 1;
+        //print("y: ");
+        //print(y); print(" x: "); println(x);
+        //println((y/20)*cols + (x/20));
+        int index = (y/20)*cols + (x/20);
+        if (index < cols*rows) {
+          pixelGrid[(y/20)*cols + (x/20)] = 1;
+        }
+          
       } else {
-        pixelGrid[y*cols + x] = 0;
+        int index = (y/20)*cols + (x/20);
+        if (index < cols*rows) {
+          pixelGrid[(y/20)*cols + (x/20)] = 0;
+        }
       }
      // }
     }
