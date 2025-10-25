@@ -14,7 +14,7 @@ maximum 2500us / 4.88uS = 512.29
 // called this way, it uses the default address 0x40
 // Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver(0x40);
 // Adafruit_PWMServoDriver pwm2 = Adafruit_PWMServoDriver(0x41);
-int const numPWMBoards = 16;
+int const numPWMBoards = 36;
 Adafruit_PWMServoDriver pwmBoards[numPWMBoards];
 
 // you can also call it with a different address you want
@@ -41,7 +41,7 @@ Adafruit_PWMServoDriver pwmBoards[numPWMBoards];
 
 #define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
 
-int const rows = 8;
+int const rows = 24;
 int const cols = 24;
 int const rowsPerBoard = 2;
 int const colsPerBoard = 8;
