@@ -52,7 +52,7 @@ uint16_t servoSerialBuffer[rows][cols];
 
 byte servoBytes[rows][cols]; // read from serial
 
-// with board mapping you can convert a x,y servo positon
+// with boardMap you can convert a x,y servo positon
 // to pwmBoardNumber. 
 // first boardX = floor(x/colsPerBoard);
 // then boardY = floor(y/rowsPerBoard);
@@ -148,13 +148,21 @@ void calculateNewServoValuesFromTargets() {
     }
   }
 }
+void noSmoothCalculateNewServoValuesFromTargets() {
+  for(int i = 0; i < rows; i ++) {
+    for(int j = 0; j < cols; j++) {
+      //servoLast[i][j] = servoValues[i][j];
+        servoValues[i][j] = servoTargets[i][j];
+    }
+  }
+}
 
 void updateServos() {
   for(int i = 0; i < rows; i ++) {
     for(int j = 0; j < cols; j++) {
       // only update if different from last update
       if(servoLast[i][j] != servoValues[i][j]) {
-            Serial.print(".u");
+            Serial.print(".u"); // update
             uint8_t boardNum = boardMap[(int)(i/rowsPerBoard)][(int)(j/colsPerBoard)];
             uint8_t servoNum = j%colsPerBoard + (i%rowsPerBoard)*colsPerBoard;
             // Serial.print("pushing changed pwm to servo. Y: ");
@@ -163,35 +171,10 @@ void updateServos() {
             // Serial.print(j);
             // Serial.print(" BoardNum: "); Serial.println(boardNum);
             pwmBoards[boardNum].setPWM(servoNum, 0, servoValues[i][j]);
-        // switch(i) {
-        //   case 0:
-        //     // pwm.setPWM(j, 0, servoValues[i][j]);
-        //     pwmBoards[0].setPWM(j, 0, servoValues[i][j]);
-        //     break;
-        //   case 1:
-        //     // pwm.setPWM(8+j, 0, servoValues[i][j]);
-        //     pwmBoards[0].setPWM(8+j, 0, servoValues[i][j]);
-        //     break;
-        //   case 2:
-        //     // pwm2.setPWM(j, 0, servoValues[i][j]);
-        //     pwmBoards[1].setPWM(j, 0, servoValues[i][j]);
-        //     break;
-        //   case 3:
-        //     // pwm2.setPWM(8+j, 0, servoValues[i][j]);
-        //     pwmBoards[1].setPWM(8+j, 0, servoValues[i][j]);
-        //     break;
-            
-        //   default:
-        //   Serial.print("strange pwm index - ignoring update");
-        // }
       } else {
-            // Serial.print("Ignoring same as last push to servo. Y: ");
-            // Serial.print(i);
-            // Serial.print(" X: ");
-            // Serial.println(j);
-
+        //ignoring same as lastUpdate Servo value
       }
-      // Serial.print(".");
+      Serial.println(".e");// end
     }
   }
 }
@@ -231,7 +214,7 @@ void setup() {
   // I think this  would work if I had a hardware serial connection. But the regular Serial is only for USB serial
   // HardwareSerialIMXRT.addMemoryForRead(&bigSerialBufferRx, sizeof(bigSerialBufferRx));
   // Serial1.addMemoryForRead(&bigSerialBufferRx, sizeof(bigSerialBufferRx));
-  Serial.println("8 channel Servo test!");
+  Serial.println("MirroWall Servo Controller Started");
 
   // pwm.begin();
   // pwm2.begin();
@@ -303,10 +286,10 @@ void loop() {
   } 
   // Do the special Serial!
   if(Serial.available()>= 17) { // 17 bytes per data packet
-    Serial.println("serial bytes received, reading starting");
+    // Serial.println("serial bytes received, reading starting");
     uint8_t header = Serial.read();
-    Serial.print("Header: ");
-    Serial.println(header);
+    // Serial.print("Header: ");
+    // Serial.println(header);
     uint16_t pwmBoardNum = 0;
     if(header <= numPWMBoards) {
       pwmBoardNum = header;
@@ -315,12 +298,12 @@ void loop() {
         int x = i % colsPerBoard + boardNumToXOffset[pwmBoardNum]; // colsPerBoard was 8 before
         int y = floor(i / colsPerBoard) + boardNumToYOffset[pwmBoardNum];
         // servoBytes[y][x] = b; // ??
-        Serial.print("byte: ");
-        Serial.print((int)b);
-        Serial.print(" x: ");
-        Serial.print(x);
-        Serial.print(" y: ");
-        Serial.print(y);
+        // Serial.print("byte: ");
+        // Serial.print((int)b);
+        // Serial.print(" x: ");
+        // Serial.print(x);
+        // Serial.print(" y: ");
+        // Serial.print(y);
 
         uint16_t value;
         if(b == 49) { // 1
@@ -333,8 +316,9 @@ void loop() {
           Serial.println(" * * * unknown value received via serial * * * * ");
           Serial.println(" * * * * * * * * * * * * * * * * * * * * * * * * ");
         }
-        Serial.print(" value: ");
-        Serial.println(value);
+        // Serial.print(" value: ");
+        // Serial.println(value);
+
         // servoTargets[y][x] = value;
         servoSerialBuffer[y][x] = value;
 
@@ -386,7 +370,8 @@ void loop() {
   // }
 
   if (millis() - pwmUpdateTimer > 10) {
-    calculateNewServoValuesFromTargets();
+    // calculateNewServoValuesFromTargets();
+    noSmoothCalculateNewServoValuesFromTargets();
     pwmUpdateTimer = millis();
   }
 
