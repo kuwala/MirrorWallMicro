@@ -33,6 +33,7 @@ Adafruit_PWMServoDriver pwmBoards[numPWMBoards];
 
 #define SERVOMIN  100 // This is the 'minimum' pulse length count (out of 4096)
 #define SERVOMAX  500 // This is the 'maximum' pulse length count (out of 4096)
+#define SERVONINTEY 300// this is aprox 90 degrees from
 
 // #define SERVOMIN  130 // This is the 'minimum' pulse length count (out of 4096)
 // #define SERVOMAX  480 // This is the 'maximum' pulse length count (out of 4096)
@@ -262,7 +263,7 @@ double setServoPulse(uint8_t n, double pulse) {
 }
 
 void loop() {
-  bool testing = false;
+  bool testing = true;
   if (millis() - stepTimer > 5000 && testing) {
     if (stepCount == 0) {
       // setServoTargetTo(2,0, SERVOMAX);
@@ -277,7 +278,7 @@ void loop() {
       // setServoTargetTo(2,0, SERVOMIN);
       for(int i = 0; i < rows; i ++) {
         for(int j = 0; j < cols; j++ ) {
-          setServoTargetTo(j,i, SERVOMAX);
+          setServoTargetTo(j,i, SERVONINTEY);
         }
       }
       // setServoTargetTo(4+random(4),0 , random(SERVOMAX));
@@ -299,8 +300,8 @@ void loop() {
   if(Serial.available()>= 17) { // 17 bytes per data packet
     // Serial.println("serial bytes received, reading starting");
     uint8_t header = Serial.read();
-    // Serial.print("Header: ");
-    // Serial.println(header);
+    Serial.print("Header: ");
+    Serial.println(header);
     uint16_t pwmBoardNum = 0;
     if(header <= numPWMBoards) {
       pwmBoardNum = header;
@@ -309,18 +310,20 @@ void loop() {
         int x = i % colsPerBoard + boardNumToXOffset[pwmBoardNum]; // colsPerBoard was 8 before
         int y = floor(i / colsPerBoard) + boardNumToYOffset[pwmBoardNum];
         // servoBytes[y][x] = b; // ??
-        // Serial.print("byte: ");
-        // Serial.print((int)b);
-        // Serial.print(" x: ");
-        // Serial.print(x);
-        // Serial.print(" y: ");
-        // Serial.print(y);
+        Serial.print("byte: ");
+        Serial.print((int)b);
+        Serial.print(" x: ");
+        Serial.print(x);
+        Serial.print(" y: ");
+        Serial.print(y);
 
         uint16_t value;
         if(b == 49) { // 1
           value = SERVOMIN;
         } else if (b==50) { // 2
           value = SERVOMAX;
+        } else if (b==51) { // 3
+          value = SERVONINTEY;
         } else {
           value = SERVOMIN;
           Serial.println(" * * * * * * * * * * * * * * * * * * * * * * * * ");
