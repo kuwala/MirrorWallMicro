@@ -162,7 +162,7 @@ void updateServos() {
     for(int j = 0; j < cols; j++) {
       // only update if different from last update
       if(servoLast[i][j] != servoValues[i][j]) {
-            Serial.print(".u"); // update
+            // Serial.print(".u"); // update
             uint8_t boardNum = boardMap[(int)(i/rowsPerBoard)][(int)(j/colsPerBoard)];
             uint8_t servoNum = j%colsPerBoard + (i%rowsPerBoard)*colsPerBoard;
             // Serial.print("pushing changed pwm to servo. Y: ");
@@ -174,7 +174,7 @@ void updateServos() {
       } else {
         //ignoring same as lastUpdate Servo value
       }
-      Serial.println(".e");// end
+      // Serial.println(".e");// end
     }
   }
 }
@@ -263,21 +263,32 @@ double setServoPulse(uint8_t n, double pulse) {
 
 void loop() {
   bool testing = false;
-  if (millis() - stepTimer > 1000 && testing) {
+  if (millis() - stepTimer > 5000 && testing) {
     if (stepCount == 0) {
-      setServoTargetTo(9,0, SERVOMAX);
-      // setServoTargetTo(4+random(4),0, random(SERVOMAX));
+      // setServoTargetTo(2,0, SERVOMAX);
+      for(int i = 0; i < rows; i ++) {
+        for(int j = 0; j < cols; j++ ) {
+          setServoTargetTo(j,i, SERVOMIN);
+        }
+      }
+      // setServoTargetTo(4+randm(4),0, random(SERVOMAX));
       stepCount++;
     } else if (stepCount == 1) {
-      setServoTargetTo(9,0, SERVOMIN);
+      // setServoTargetTo(2,0, SERVOMIN);
+      for(int i = 0; i < rows; i ++) {
+        for(int j = 0; j < cols; j++ ) {
+          setServoTargetTo(j,i, SERVOMAX);
+        }
+      }
       // setServoTargetTo(4+random(4),0 , random(SERVOMAX));
       stepCount++;
+      stepCount = 0;
     } else if (stepCount == 2) {
-      setServoTargetTo(10,3, SERVOMAX);
+      setServoTargetTo(1,0, SERVOMAX);
       // setServoTargetTo(4+random(4),0 , random(SERVOMAX));
       stepCount++;
     } else if (stepCount == 3) {
-      setServoTargetTo(10,3, SERVOMIN);
+      setServoTargetTo(1,0, SERVOMIN);
       // setServoTargetTo(4+random(4),0, random(SERVOMAX));
       stepCount = 0;
     }
@@ -333,12 +344,12 @@ void loop() {
       for(int y = 0; y < rows; y ++) {
         for(int x = 0; x < cols; x++) {
           servoTargets[y][x] = servoSerialBuffer[y][x];
-          Serial.print(servoSerialBuffer[y][x]);
-          Serial.print(".x");
+          // Serial.print(servoSerialBuffer[y][x]);
+          // Serial.print(".x");
         }
-        Serial.println("|");
+        // Serial.println("|");
       }
-      Serial.println("done.");
+      // Serial.println("done.");
 
     } else {
       Serial.println("Invalid Header Byte Received");

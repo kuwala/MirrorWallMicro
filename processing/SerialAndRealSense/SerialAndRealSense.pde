@@ -9,7 +9,7 @@ int camHeight = 480;
 
 
 Serial sPort;
-int rows = 8;
+int rows = 24;
 int cols = 24;
 int numPixels = cols * rows;
 int squareSize = 32; // 32 pixels
@@ -26,7 +26,7 @@ int testLoopIndex = 0;
 boolean printSerialFromMicro = true;
 void setup() {
   pixelDensity(2);
-  size(900,600);
+  size(900,900);
 
   camera.enableDepthStream(640,480);
   camera.start();

@@ -25,7 +25,7 @@ void setup() {
   printArray(Serial.list());
   
   //connect to one
-  String portName = Serial.list()[3];
+  String portName = Serial.list()[0];
   print("\n\nConnecting to serial on: ");
   println(portName);
   sPort = new Serial(this, portName, 115200);
