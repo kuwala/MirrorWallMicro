@@ -14,12 +14,14 @@ int cols = 24;
 int numPixels = cols * rows;
 int squareSize = 32; // 32 pixels
 int[] pixelGrid = new int[numPixels];
+int[] pixelGridLast = new int[numPixels];
 // int[][] pixelGrid2D = new int[rows][cols]; // y,x
 
 boolean buttonColorToggle = false;
 
 int appState = 0; // 0 draw pixels mode, 1 test pattern loop
 String testLoopText = "test loop OFF";
+String cameraButtonText = "Camera OFF";
 int testLoopIndex = 0;
 
 // This can turn on or off debugging info from microcontroller over serial
@@ -51,7 +53,7 @@ void draw() {
   for(int i = 0; i < numPixels; i ++) {
     if ( pixelGrid[i] == 0 ) {
       fill(127);
-    } else if ( pixelGrid[i] == 1 ) {
+    } else if ( pixelGrid[i] == 2 ) {
       fill(255);
     }
     int x = (i % cols) * 32;
@@ -70,14 +72,14 @@ void draw() {
   fill(64);
   text("send pixels",32+ 8, 32 * (rows+1) );
   text(testLoopText, (32+64+32) + 32+ 8, 32 * (rows+1) );
-  text("run camera", (32+64+32)*2 + 32+ 8, 32 * (rows+1) );
+  text(cameraButtonText, (32+64+32)*2 + 32+ 8, 32 * (rows+1) );
   if (appState == 0) { // draw mode
     // serial is sent when button press is detected
   } else if(appState == 1) { // test pattern
 
     // flip a pixel
     if(pixelGrid[testLoopIndex] == 0) {
-      pixelGrid[testLoopIndex] = 1;
+      pixelGrid[testLoopIndex] = 2;
     } else {
       pixelGrid[testLoopIndex] = 0;
     }
@@ -115,13 +117,13 @@ void draw() {
 
 void doCameraUpdates()
 {
-  background(22);
+  //background(22);
   // read frames
   camera.readFrames();
   // read depth buffer
   short[][] data = camera.getDepthData();
   noFill();
-  strokeWeight(1.0);
+  // remove for DRAW // strokeWeight(1.0);
   // use it to display circles
   for (int y = 0; y < camHeight; y += 20) {
     for (int x = 0; x < camWidth-160; x += 20) {
@@ -129,19 +131,37 @@ void doCameraUpdates()
       // get intensity
       int intensity = data[y][x];
       // map intensity (values between 0-65536)
-      float d = map(intensity, 0, 3000, 20, 0);
+      //float d = map(intensity, 0, 3000, 20, 0);
       float c = map(intensity, 0, 3000, 255, 0);
-      d = constrain(d, 0, 16);
+      //d = constrain(d, 0, 16);
       c = constrain(c, 0, 255);
+      int sumIntensity = 0;
+      int averageIntensity = 0;
+      for(int i = 0; i < 20; i ++) {
+          for(int j = 0; j < 20; j++) {
+           sumIntensity = sumIntensity + data[y+i][x+j];
+          }
+        }
+        averageIntensity = sumIntensity / (20*20);
+        //print("average Intensity: "); println(averageIntensity);
+        //print("regular Intensity: "); println(intensity);
+        //print("sum intensity: "); println(sumIntensity);
+        
+      float d = map(averageIntensity, 0, 3000, 20, 0);
+      d = constrain(d, 0, 16);
+      
       if (d > 9) {
         stroke(c, 255, 255);
-        circle(x, y, d);
+       //REMOVE TO DRAW// circle(x, y, d);
         //print("y: ");
         //print(y); print(" x: "); println(x);
         //println((y/20)*cols + (x/20));
         int index = (y/20)*cols + (x/20);
+        
+      
+        
         if (index < cols*rows) {
-          pixelGrid[(y/20)*cols + (x/20)] = 1;
+          pixelGrid[(y/20)*cols + (x/20)] = 2;
         }
           
       } else {
@@ -178,7 +198,7 @@ void sendPixelsOverSerial() {
           if(pixelGrid[currentPixel] == 0) {
             sPort.write("1");
           } else {
-            sPort.write("2");
+            sPort.write("3");
           }
         }
       }
@@ -217,7 +237,7 @@ void mouseReleased() {
     
     int i = row * cols + col;
     if (pixelGrid[i] == 0) {
-      pixelGrid[i] = 1;
+      pixelGrid[i] = 2;
     } else {
       pixelGrid[i] = 0;
     }
@@ -241,15 +261,19 @@ void mouseReleased() {
       }
       testLoopIndex = 0;
       appState = 1;
+      testLoopText = "testLoop ON";
     } else {
+      testLoopText = "testLoop OFF";
       appState = 0;
     }
   }
   if( mouseX > 32+(32+96)*2 && mouseX < 32+96 + (32+96)*2 && mouseY > (32*(rows+1) - 16) && mouseY < (32*(rows+1) +16)) {
     if(appState != 2) {
         appState = 2;
+        cameraButtonText = "Camera ON";
     } else {
         appState = 0;
+        cameraButtonText = "Camera OFF";
     }
 
   }

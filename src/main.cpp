@@ -172,6 +172,7 @@ void updateServos() {
             // Serial.print(j);
             // Serial.print(" BoardNum: "); Serial.println(boardNum);
             pwmBoards[boardNum].setPWM(servoNum, 0, servoValues[i][j]);
+            servoLast[i][j] = servoValues[i][j];
       } else {
         //ignoring same as lastUpdate Servo value
       }
@@ -263,7 +264,7 @@ double setServoPulse(uint8_t n, double pulse) {
 }
 
 void loop() {
-  bool testing = true;
+  bool testing = false;
   if (millis() - stepTimer > 5000 && testing) {
     if (stepCount == 0) {
       // setServoTargetTo(2,0, SERVOMAX);
@@ -310,12 +311,12 @@ void loop() {
         int x = i % colsPerBoard + boardNumToXOffset[pwmBoardNum]; // colsPerBoard was 8 before
         int y = floor(i / colsPerBoard) + boardNumToYOffset[pwmBoardNum];
         // servoBytes[y][x] = b; // ??
-        Serial.print("byte: ");
-        Serial.print((int)b);
-        Serial.print(" x: ");
-        Serial.print(x);
-        Serial.print(" y: ");
-        Serial.print(y);
+        // Serial.print("byte: ");
+        // Serial.print((int)b);
+        // Serial.print(" x: ");
+        // Serial.print(x);
+        // Serial.print(" y: ");
+        // Serial.print(y);
 
         uint16_t value;
         if(b == 49) { // 1
@@ -343,7 +344,7 @@ void loop() {
       for(int i = 0; i < 16; i ++) {
         Serial.read();
       }
-      Serial.print("Drawing Buffered Serial Data");
+      Serial.println("Drawing Buffered Serial Data");
       for(int y = 0; y < rows; y ++) {
         for(int x = 0; x < cols; x++) {
           servoTargets[y][x] = servoSerialBuffer[y][x];
@@ -355,7 +356,9 @@ void loop() {
       // Serial.println("done.");
 
     } else {
-      Serial.println("Invalid Header Byte Received");
+      Serial.println("* * * * Invalid Header Byte Received * * * * ");
+      Serial.println("* * * * Invalid Header Byte Received * * * * ");
+      Serial.println("* * * * Invalid Header Byte Received * * * * ");
     }
 
   }
