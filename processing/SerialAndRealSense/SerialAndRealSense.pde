@@ -161,13 +161,13 @@ void doCameraUpdates()
       
         
         if (index < cols*rows) {
-          pixelGrid[(y/20)*cols + (x/20)] = 2;
+          pixelGrid[(y/20)*cols + (cols-(x/20))] = 2;
         }
           
       } else {
         int index = (y/20)*cols + (x/20);
         if (index < cols*rows) {
-          pixelGrid[(y/20)*cols + (x/20)] = 0;
+          pixelGrid[(y/20)*cols + (cols -(x/20))] = 0;
         }
       }
      // }
