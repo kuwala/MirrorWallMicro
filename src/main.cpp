@@ -49,7 +49,10 @@ int const colsPerBoard = 8;
 uint16_t servoValues[rows][cols]; // current values to set this update loop
 uint16_t servoLast[rows][cols];
 uint16_t servoTargets[rows][cols];
-uint16_t servoSerialBuffer[rows][cols];
+uint16_t servoSerialBuffer[rows][cols]; // stored Serial data before its complete and pushed
+unsigned long servosTimers[rows][cols]; // used for debouncing input with noise camera pixels
+uint16_t pixelDebounce = 700; // milliseconds
+bool enabledDebounce = false;
 
 byte servoBytes[rows][cols]; // read from serial
 
@@ -162,7 +165,8 @@ void updateServos() {
   for(int i = 0; i < rows; i ++) {
     for(int j = 0; j < cols; j++) {
       // only update if different from last update
-      if(servoLast[i][j] != servoValues[i][j]) {
+      if(servoLast[i][j] != servoValues[i][j] && ((millis() - servosTimers[i][j]) > pixelDebounce)) {
+            servosTimers[i][j] = millis();
             // Serial.print(".u"); // update
             uint8_t boardNum = boardMap[(int)(i/rowsPerBoard)][(int)(j/colsPerBoard)];
             uint8_t servoNum = j%colsPerBoard + (i%rowsPerBoard)*colsPerBoard;
