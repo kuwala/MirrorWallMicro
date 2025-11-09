@@ -51,7 +51,7 @@ uint16_t servoLast[rows][cols];
 uint16_t servoTargets[rows][cols];
 uint16_t servoSerialBuffer[rows][cols]; // stored Serial data before its complete and pushed
 unsigned long servosTimers[rows][cols]; // used for debouncing input with noise camera pixels
-uint16_t pixelDebounce = 700; // milliseconds
+uint16_t pixelDebounce = 50; // milliseconds
 bool enabledDebounce = false;
 
 byte servoBytes[rows][cols]; // read from serial
