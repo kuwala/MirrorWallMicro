@@ -11,8 +11,6 @@ int camHeight = 480;
 Serial sPort;
 int rows = 24;
 int cols = 24;
-int sendRows = 2;
-int sendCols = 8;
 int numPixels = cols * rows;
 int squareSize = 32; // 32 pixels
 int[] pixelGrid = new int[numPixels];
@@ -42,10 +40,10 @@ void setup() {
   printArray(Serial.list());
   
   //connect to one
-  String portName = Serial.list()[0];
-  print("\n\nConnecting to serial on: ");
-  println(portName);
-  sPort = new Serial(this, portName, 115200);
+  //String portName = Serial.list()[0];
+  //print("\n\nConnecting to serial on: ");
+  //println(portName);
+  //sPort = new Serial(this, portName, 115200);
   
 }
 
@@ -62,7 +60,10 @@ void draw() {
     int x = (i % cols) * 32;
     int y = (i /cols) * 32;
     rect(x,y, 24, 24);
-  }
+    //noStroke();
+    //rect(x, y, 32, 32);
+
+}
   if(buttonColorToggle) {
     fill(170);
   } else {
@@ -86,7 +87,10 @@ void draw() {
     } else {
       pixelGrid[testLoopIndex] = 0;
     }
-    sendPixelsOverSerial();
+    // send all pixels over serial
+    //sendPixelsOverSerial();
+    
+    
     // send all pixels over serial
     // for(int i = 0; i < numPixels; i ++) {
     //   if(i%16 == 0) {
@@ -113,7 +117,7 @@ void draw() {
   } else if (appState == 2) {
     // run camera
     doCameraUpdates();
-    sendPixelsOverSerial();
+    //sendPixelsOverSerial();
 
   }
 }
@@ -124,7 +128,12 @@ void doCameraUpdates()
   // read frames
   camera.readFrames();
   // read depth buffer
-  short[][] data = camera.getDepthData();
+  short[][] data = camera.getDepthData(); //480x640
+  //for(int i = 0; i < 480; i++) {
+  //  for(int j = 0;j < 640; j++) {
+  //    data[i][j] = 3000; 
+  //  }
+  //}
   noFill();
   // remove for DRAW // strokeWeight(1.0);
   // use it to display circles
@@ -132,12 +141,15 @@ void doCameraUpdates()
     for (int x = 0; x < camWidth-160; x += 20) {
       //if(y < height && width < width) {
       // get intensity
-      int intensity = data[y][x];
+      int intensity = data[y][x+40];
       // map intensity (values between 0-65536)
       //float d = map(intensity, 0, 3000, 20, 0);
+      if (intensity< 1) {
+       //intensity = 3000; 
+      }
       float c = map(intensity, 0, 3000, 255, 0);
       //d = constrain(d, 0, 16);
-      c = constrain(c, 0, 255);
+      c = constrain(c, 0, 255); // for 0-3000 its about 12 pixels per value increment
       int sumIntensity = 0;
       int averageIntensity = 0;
       for(int i = 0; i < 20; i ++) {
@@ -150,7 +162,8 @@ void doCameraUpdates()
         //print("regular Intensity: "); println(intensity);
         //print("sum intensity: "); println(sumIntensity);
         
-      float d = map(averageIntensity, 0, 3000, 20, 0);
+      //float d = map(averageIntensity, 0, 3000, 20, 0);
+      float d = map(intensity, 0, 3000, 20, 0);
       d = constrain(d, 0, 16);
       
       if (d > 9) {
@@ -192,17 +205,16 @@ void sendPixelsOverSerial() {
     for (int boardNum = 0; boardNum < 4; boardNum++) {
 
       // 4 boards per section
-      sPort.write(char(sectionIndex*4 + boardNum));
-      println(boardNum);
+      // sPort.write(char(sectionIndex*4 + boardNum));
       // for 2 rows of pixels per board
       for (int currentRow = 0; currentRow < 2; currentRow ++) {
         // read 8 pixels (colsPerBoard)
         for(int i = 0; i < colsPerBoard; i ++) {
           int currentPixel = sectionOffset + boardOffset + currentRow * cols + i; // (cols = 24);
           if(pixelGrid[currentPixel] == 0) {
-            sPort.write("1");
+            // sPort.write("1");
           } else {
-            sPort.write("3");
+            // sPort.write("3");
           }
         }
       }
@@ -225,9 +237,9 @@ void sendPixelsOverSerial() {
   //     sPort.write("2");
   //   }
   // }
-  sPort.write(char(255));
+  // sPort.write(char(255));
   for(int i = 0; i < 16; i ++ ) {
-    sPort.write(char(0));
+    // sPort.write(char(0));
   }
 
 }
@@ -249,7 +261,7 @@ void mouseReleased() {
   // check if send serial button was clicked then send serial
   if( mouseX > 32 && mouseX < 32+96 && mouseY > (32*(rows+1) - 16) && mouseY < (32*(rows+1) +16)) {
     buttonColorToggle = !buttonColorToggle;
-    sendPixelsOverSerial();
+    //sendPixelsOverSerial();
   }
   // decode the first 8 pixels
   // jump position to next 8 pixels 

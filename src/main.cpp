@@ -42,8 +42,8 @@ Adafruit_PWMServoDriver pwmBoards[numPWMBoards];
 
 #define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
 
-int const rows = 24;
-int const cols = 24;
+int const rows = 2;
+int const cols = 8;
 int const rowsPerBoard = 2;
 int const colsPerBoard = 8;
 uint16_t servoValues[rows][cols]; // current values to set this update loop
@@ -269,7 +269,7 @@ double setServoPulse(uint8_t n, double pulse) {
 
 void loop() {
   bool testing = false;
-  if (millis() - stepTimer > 5000 && testing) {
+  if (millis() - stepTimer > 1000 && testing) {
     if (stepCount == 0) {
       // setServoTargetTo(2,0, SERVOMAX);
       for(int i = 0; i < rows; i ++) {
@@ -329,6 +329,7 @@ void loop() {
           value = SERVOMAX;
         } else if (b==51) { // 3
           value = SERVONINTEY;
+          Serial.print("c");
         } else {
           value = SERVOMIN;
           Serial.println(" * * * * * * * * * * * * * * * * * * * * * * * * ");
