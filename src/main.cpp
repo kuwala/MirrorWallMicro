@@ -42,7 +42,7 @@ Adafruit_PWMServoDriver pwmBoards[numPWMBoards];
 
 #define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
 
-int const rows = 4;
+int const rows = 2;
 int const cols = 8;
 int const rowsPerBoard = 2;
 int const colsPerBoard = 8;
@@ -51,7 +51,7 @@ uint16_t servoLast[rows][cols];
 uint16_t servoTargets[rows][cols];
 uint16_t servoSerialBuffer[rows][cols]; // stored Serial data before its complete and pushed
 unsigned long servosTimers[rows][cols]; // used for debouncing input with noise camera pixels
-uint16_t pixelDebounce = 700; // milliseconds
+uint16_t pixelDebounce = 50; // milliseconds
 bool enabledDebounce = false;
 
 byte servoBytes[rows][cols]; // read from serial
@@ -269,7 +269,7 @@ double setServoPulse(uint8_t n, double pulse) {
 
 void loop() {
   bool testing = false;
-  if (millis() - stepTimer > 100 && testing) {
+  if (millis() - stepTimer > 1000 && testing) {
     if (stepCount == 0) {
       // setServoTargetTo(2,0, SERVOMAX);
       for(int i = 0; i < rows; i ++) {
@@ -329,6 +329,7 @@ void loop() {
           value = SERVOMAX;
         } else if (b==51) { // 3
           value = SERVONINTEY;
+          Serial.print("c");
         } else {
           value = SERVOMIN;
           Serial.println(" * * * * * * * * * * * * * * * * * * * * * * * * ");
