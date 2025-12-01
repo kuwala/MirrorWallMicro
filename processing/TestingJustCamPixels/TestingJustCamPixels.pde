@@ -16,28 +16,35 @@ int squareSize = 32; // 32 pixels
 
 // pixel grid stores pixel values to send over serial
 int[] pixelGrid = new int[numPixels];
-// int[] pixelGridLast = new int[numPixels];
+int[] pixelGridLast = new int[numPixels];
+int[] targetValuesLast = new int[numPixels];
 // int[][] pixelGrid2D = new int[rows][cols]; // y,x
 int[] pixelTemps = new int[numPixels];
 int[] pixelStates = new int[numPixels]; // 0 - idle, 1 - overheated
-int triggerRateTemp = 32; // adds 32 temp every time a pixel value is changed
-int cooldownRateTemp = 8; // cools down 8 temp every frame
+int triggerRateTemp = 64; // adds 32 temp every time a pixel value is changed
+int cooldownRateTemp = 7; // cools down 8 temp every frame
 int pixelTempMax = 32*12 - 8*12; // about 12 frames of changes to overheat
 
 boolean buttonColorToggle = false;
+boolean noiseClippingToggle = false;
+boolean cooldownToggle = true;
 
 int appState = 0; // 0 draw pixels mode, 1 test pattern loop
 String testLoopText = "test loop OFF";
 String cameraButtonText = "Camera OFF";
+String noiseButtonText = "IR shadow FG";
+String cooldownButtonText = "Cooldowns ON";
 int testLoopIndex = 0;
 
 // This can turn on or off debugging info from microcontroller over serial
 boolean printSerialFromMicro = true;
 void setup() {
   pixelDensity(2);
-  size(900,900);
+  size(1600,900);
 
   camera.enableDepthStream(640,480);
+  camera.enableColorStream();
+  camera.enableColorizer();
   camera.enableAlign(); // Not sure if it does anything
   camera.start();
   
@@ -69,9 +76,11 @@ void draw() {
     rect(x,y, 24, 24);
     //noStroke();
     // draw pixel temp state
-    if(pixelStates[i] == 1) {
-      fill(255,0,0);
-      rect(x, y, 8, 8);
+    if(cooldownToggle) {
+      if(pixelStates[i] == 1) {
+        fill(255,0,0);
+        rect(x, y, 8, 8);
+      }
     }
 
 }
@@ -83,11 +92,15 @@ void draw() {
   // The buttons!
   rect(32, 32*(rows+1) - 16, 96, 32); // send serial button
   rect(32 + (32+64+32), 32*(rows+1) - 16, 96, 32); // test pattern button
-  rect(32 + (32+64+32)*2, 32*(rows+1) - 16, 96, 32); // test pattern button
+  rect(32 + (32+64+32)*2, 32*(rows+1) - 16, 96, 32); // camera button
+  rect(32 + (32+64+32 + 100)*2, 32*(rows+1) - 16, 96, 32); // noise button
+  rect(32 + (32+64+32 + 200)*2, 32*(rows+1) - 16, 96, 32); // cooldown button
   fill(64);
   text("send pixels",32+ 8, 32 * (rows+1) );
   text(testLoopText, (32+64+32) + 32+ 8, 32 * (rows+1) );
   text(cameraButtonText, (32+64+32)*2 + 32+ 8, 32 * (rows+1) );
+  text(noiseButtonText, (32+64+32+ 100)*2 + 32+ 8, 32 * (rows+1) );
+  text(cooldownButtonText, (32+64+32+200)*2 + 32+ 8, 32 * (rows+1) );
   if (appState == 0) { // draw mode
     // serial is sent when button press is detected
   } else if(appState == 1) { // test pattern
@@ -129,6 +142,8 @@ void draw() {
     // run camera
     doCameraUpdates();
     //sendPixelsOverSerial();
+    
+    
 
   }
 }
@@ -138,6 +153,16 @@ void doCameraUpdates()
   //background(22);
   // read frames
   camera.readFrames();
+  // draw camera feed
+    push();
+    scale(-1,1);
+    blendMode(BLEND);
+    image(camera.getColorImage(), -1500, 0);
+    blendMode(MULTIPLY);
+    image(camera.getDepthImage(), -1500, 0);
+    blendMode(BLEND);
+    pop();
+  
   // read depth buffer
   short[][] data = camera.getDepthData(); //480x640
   //for(int i = 0; i < 480; i++) {
@@ -153,11 +178,17 @@ void doCameraUpdates()
       //if(y < height && width < width) {
       // get intensity
       // cropping the left most 40 pixels out
+      
       int intensity = data[y][x+40];
+      if(y==0) {
+        intensity = data[y+10][x+40];
+      }
       // map intensity (values between 0-65536)
       //float d = map(intensity, 0, 3000, 20, 0);
-      if (intensity< 1) {
-       //intensity = 3000; 
+      if(noiseClippingToggle) {
+        if (intensity< 1) {
+          intensity = 3000; 
+        }
       }
       float c = map(intensity, 0, 3000, 255, 0);
       //d = constrain(d, 0, 16);
@@ -183,68 +214,112 @@ void doCameraUpdates()
       // so the camera looks like a mirror
       int pixelIndex = (y/20)*cols + (cols-((x/20)+1));
      
+      pixelGridLast[pixelIndex] = pixelGrid[pixelIndex];
+      int targetPixelValue = 2;
       if (d > 9) {
-        stroke(c, 255, 255);
-       //REMOVE TO DRAW// circle(x, y, d);
-        //print("y: ");
-        //print(y); print(" x: "); println(x);
-        //println((y/20)*cols + (x/20));
-
-        // if pixel state is idle update
-        // else ignore pixel change until it cools down
-
-        // int index = (y/20)*cols + (x/20);
-        if (pixelIndex < cols*rows) {
-          if (pixelStates[pixelIndex] == 0) { // if idle
-            if(pixelGrid[pixelIndex] == 0) { // if pixel changed
-              // trigger changed temp up
-              pixelTemps[pixelIndex] += triggerRateTemp;
-              if(pixelTemps[pixelIndex] > pixelTempMax) {
-                pixelStates[pixelIndex] = 1;// over heated
-              }
-              pixelGrid[pixelIndex] = 2;
-
-            } else {
-              pixelTemps[pixelIndex] -= cooldownRateTemp;
-              if(pixelTemps[pixelIndex]<0) {
-                pixelTemps[pixelIndex] = 0;
-              }
-              // pixelGrid[pixelIndex] stayed the same last frame
-            }
-
-          } else { // cooling down
-            pixelTemps[pixelIndex] -= cooldownRateTemp;
-            if(pixelTemps[pixelIndex]<0) {
-              pixelTemps[pixelIndex] = 0;
-              pixelStates[pixelIndex] = 0; // done cooling down
-            }
-
-          }
-        }
-          
-      } else { // deapth is pixel that is off
-        // int index = (y/20)*cols + (x/20);
-        if (pixelIndex < cols*rows) {
-          if(pixelStates[pixelIndex] == 0) { // if idle
-            if(pixelGrid[pixelIndex] == 2) { // if pixel changed
-              pixelTemps[pixelIndex] += triggerRateTemp;
-              if(pixelTemps[pixelIndex] > pixelTempMax) {
-                pixelStates[pixelIndex] = 1;// over heated
-              }
-              pixelGrid[pixelIndex] = 0;
-            }
-
-          } else { // cooling down
-            pixelTemps[pixelIndex] -= cooldownRateTemp;
-            if(pixelTemps[pixelIndex]<0) {
-              pixelTemps[pixelIndex] = 0;
-              pixelStates[pixelIndex] = 0;
-            }
-
-          }
-        }
+        targetPixelValue = 2;
+      } else  {
+        targetPixelValue = 0;
       }
-     // }
+      if(cooldownToggle) {
+        if (targetPixelValue != pixelGridLast[pixelIndex]) {
+          if(pixelStates[pixelIndex] == 0) { // idle 
+            // pixelTemps[pixelIndex] += triggerRateTemp;
+            // if(pixelTemps[pixelIndex] > pixelTempMax) {
+            //   pixelTemps[pixelIndex] = pixelTempMax;
+            //   pixelStates[pixelIndex] = 1;
+            // }
+            pixelGrid[pixelIndex] = targetPixelValue;
+          } 
+        }
+        if(targetValuesLast[pixelIndex] != targetPixelValue) {
+          pixelTemps[pixelIndex] += triggerRateTemp;
+          if(pixelTemps[pixelIndex] > pixelTempMax) {
+            pixelTemps[pixelIndex] = pixelTempMax;
+            pixelStates[pixelIndex] = 1;
+          }
+        }
+        targetValuesLast[pixelIndex] = targetPixelValue;
+        pixelTemps[pixelIndex] -= cooldownRateTemp;
+        if(pixelTemps[pixelIndex] <0) {
+          pixelTemps[pixelIndex] = 0;
+          pixelStates[pixelIndex] = 0;
+        }
+      } else {
+        pixelGrid[pixelIndex] = targetPixelValue;
+      } // end cooldownToggle
+
+
+      
+      // if (d > 9) {
+      //   stroke(c, 255, 255);
+      //  //REMOVE TO DRAW// circle(x, y, d);
+      //   //print("y: ");
+      //   //print(y); print(" x: "); println(x);
+      //   //println((y/20)*cols + (x/20));
+
+      //   // if pixel state is idle update
+      //   // else ignore pixel change until it cools down
+
+      //   // int index = (y/20)*cols + (x/20);
+      //   if (pixelIndex < cols*rows) {
+      //     if (pixelStates[pixelIndex] == 0) { // if idle
+      //       if(pixelGrid[pixelIndex] == 0) { // if pixel changed
+      //         // trigger changed temp up
+      //         pixelTemps[pixelIndex] += triggerRateTemp;
+      //         if(pixelTemps[pixelIndex] > pixelTempMax) {
+      //           pixelStates[pixelIndex] = 1;// over heated
+      //         }
+      //         pixelGrid[pixelIndex] = 2;
+
+      //       } else {
+      //         pixelTemps[pixelIndex] -= cooldownRateTemp;
+      //         if(pixelTemps[pixelIndex]<0) {
+      //           pixelTemps[pixelIndex] = 0;
+      //         }
+      //         // pixelGrid[pixelIndex] stayed the same last frame
+      //       }
+
+      //     } else { // cooling down
+      //       // can still raise temp so it does not oscilate between states
+      //       // if(pixelTemps[pixelIndex] < pixelTempMax) {
+      //       //   if(pixelGridLast[pixelIndex] != pixelGrid[pixelIndex]) {
+      //       //     pixelTemps[pixelIndex] += triggerRateTemp;
+      //       //   }
+      //       // }
+      //       pixelTemps[pixelIndex] -= cooldownRateTemp;
+      //       if(pixelTemps[pixelIndex]<0) {
+      //         pixelTemps[pixelIndex] = 0;
+      //         pixelStates[pixelIndex] = 0; // done cooling down
+      //       }
+
+      //     }
+      //   }
+          
+      // } else { // deapth is pixel that is off
+      //   // int index = (y/20)*cols + (x/20);
+      //   if (pixelIndex < cols*rows) {
+      //     if(pixelStates[pixelIndex] == 0) { // if idle
+      //       if(pixelGrid[pixelIndex] == 2) { // if pixel changed
+      //         pixelTemps[pixelIndex] += triggerRateTemp;
+      //         if(pixelTemps[pixelIndex] > pixelTempMax) {
+      //           pixelStates[pixelIndex] = 1;// over heated
+      //         }
+      //         pixelGrid[pixelIndex] = 0;
+      //       }
+
+      //     } else { // cooling down
+      //       pixelTemps[pixelIndex] -= cooldownRateTemp;
+      //       if(pixelTemps[pixelIndex]<0) {
+      //         pixelTemps[pixelIndex] = 0;
+      //         pixelStates[pixelIndex] = 0;
+      //       }
+
+      //     }
+      //   }
+      // }
+
+     // } // something else
     }
   }
 }
@@ -353,6 +428,22 @@ void mouseReleased() {
     }
     buttonColorToggle = !buttonColorToggle;
 
+  }
+  if( mouseX > 32+(32+96+ 100)*2 && mouseX < 32+96 + (32+96 + 100)*2 && mouseY > (32*(rows+1) - 16) && mouseY < (32*(rows+1) +16)) {
+    noiseClippingToggle = !noiseClippingToggle;
+    if(noiseClippingToggle) {
+        noiseButtonText = "IR shadow BG";
+    } else {
+        noiseButtonText = "IR shadow FG";
+    }
+  }
+  if( mouseX > 32+(32+96 + 200)*2 && mouseX < 32+96 + (32+96 + 200)*2 && mouseY > (32*(rows+1) - 16) && mouseY < (32*(rows+1) +16)) {
+    cooldownToggle = !cooldownToggle;
+    if(cooldownToggle) {
+        cooldownButtonText = "coolDowns ON";
+    } else {
+        cooldownButtonText = "coolDowns OFF";
+    }
   }
   
 }
