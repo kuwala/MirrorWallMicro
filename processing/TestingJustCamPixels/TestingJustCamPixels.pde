@@ -1,4 +1,6 @@
 import ch.bildspur.realsense.*;
+// include the following package for the types
+import ch.bildspur.realsense.type.*;
 import processing.serial.*;
 
 RealSenseCamera camera = new RealSenseCamera(this);
@@ -43,6 +45,14 @@ void setup() {
   size(1600,900);
 
   camera.enableDepthStream(640,480);
+ 
+  // list of all supported filters
+  //camera.addThresholdFilter(0.0f, 1.0f);
+  //camera.addSpatialFilter(2, 0.5f, 20, 0);
+  //camera.addDecimationFilter(2);
+  //camera.addDisparityTransform(true);
+  //camera.addHoleFillingFilter(HoleFillingType.FarestFromAround);
+  //camera.addTemporalFilter(0.4f, 80, PersistencyIndex.ValidIn2_Last4);
   camera.enableColorStream();
   camera.enableColorizer();
   camera.enableAlign(); // Not sure if it does anything

@@ -1,30 +1,50 @@
 # MirrorWall Project
 
 ## Assembly Instructions
-First assemble the Tile of 24x24 servos. Pay attention to the modules they each have a unique address that is configured by soldering the solder jumper pads on the board. Each `PCA9685` module controls 16 servos in a 8x2 configuration. The modules all need to be connected to the i2c bus. The order of the connection does not matter because each module has a unique address. Typically the first thing connected to the i2c bus from the teensy4 is the adafruit i2c active termination module. This helps the i2c signl run longer and allow for lots of i2c devices to be connected.
+First assemble the Section Tile of 24x24 servos. Pay attention to the modules they each have a unique address that is configured by soldering the solder jumper pads on the board. Each `PCA9685` module controls 16 servos in a 8x2 configuration. The modules all need to be connected to the i2c bus. The physical connection order of the pwm modules does not matter because each module has a unique address. As long as the servos are in the correct output headers on the module. Typically the first thing connected to the i2c bus from the teensy4 is the adafruit i2c active termination module. This helps the i2c signl run longer and allow for lots of i2c devices to be connected.
 
-Follow the layout to see how the i2c modules are connected.  When viewed from the back the order is as follows.
-[image] of wireing schematic
 - [ ] connect all the servos to the modules
 - [ ] make sure the proper module order is maintained
 - [ ] connect the power supply modules to the distribution terminals
-- [ ] connect the power from distribution to the servo modules a few sections at a time
-- [ ] use a multi beter to check for shorts
-- - [ ] check between power and ground
+- [ ] connect the power from distribution to the servo modules v+ and gnd green screw terminals 
+- [ ] use a multimeter to check for shorts *before power on*
+- - [ ] check between power v+ and ground
 - - [ ] check between power and each of the i2c data lines
 - - [ ] check for v+ and v- on all the power supplies
-- - [ ] check v+ agains ground / power supply chassie
+- - [ ] check v+ and earth ground / power supply chassie
 - [ ] connect the rest of the power supplies a few at a time
 
+Follow the layout to see how the i2c modules are connected.  When viewed from the back the order is as follows.
+![image](img\pwm_module_wiring_diagram.drawio.png "pwm module wiring diagram") of i2c wiring schematic
+
+This is the relevant code in the `.\src\main.cpp` file to change if you need to alter the pwm module board layout. It it how the modules are when looking at the back of the section of 24x24 servos.
+```cpp
+uint8_t boardMap[12][3] = {
+  {0, 4, 8},
+  {1, 5, 9},
+  {2, 6, 10},
+  {3, 7, 11},
+  {12, 16, 20},
+  {13, 17, 21},
+  {14, 18, 22},
+  {15, 19, 23},
+  {24, 28, 32},
+  {25, 29, 33},
+  {26, 30, 34},
+  {27, 31, 35},
+};
+```
+
 ## installing new firmware
-If you have a `.hex` file you can flash it onto the teensy4. Alternatively the firmware can be built using platformio in the project. You should also be able to use arduino and teensyduino follow the guide on the teensy website to install teensyduino. Then copy the main.c file contents into a the source file for your new project. You may need to install some libraries.
+[Prerelease_01 firmware.hex](https://github.com/kuwala/MirrorWallMicro/releases/tag/Prerelease_01)
+If you have a `.hex` file you can flash it onto the teensy4 using the [teensy loader software](https://www.pjrc.com/teensy/loader.html). Alternatively the firmware can be built using platformio in the project. You should also be able to use arduino and [teensyduino](https://www.pjrc.com/teensy/td_download.html) follow the guide on the teensy website to install teensyduino. Then copy the main.c file contents into a the source file for your new project. You may need to install some libraries.
 
 ## Setting up computer software
-Download and install processing 4. The needed library supports intel mac cpus, or windows.
+Download and install processing 4. The needed library should support intel mac cpus, definitively does support windows.
 
 On windows you will need to install the [windows Intel RealSense SDK](https://github.com/realsenseai/librealsense/releases/tag/v2.53.1)
 
-On MacOS (intel based) you can use brew to install it. [brew ilbrealsense](https://formulae.brew.sh/formula/librealsense)
+On MacOS (intel based) you can install [brew](https://brew.sh/) and use it to install the realsense sdk. [brew ilbrealsense](https://formulae.brew.sh/formula/librealsense)
 
 Then you will need to install the `Intel RealSense for Processing 2.5.1 Florian Bruggisser` library. You do that by going to `sketch>import library>Management Libraries...` and search for `RealSense`. 
 
