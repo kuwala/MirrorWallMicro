@@ -15,7 +15,7 @@ First assemble the Section Tile of 24x24 servos. Pay attention to the modules th
 - [ ] connect the rest of the power supplies a few at a time
 
 Follow the layout to see how the i2c modules are connected.  When viewed from the back the order is as follows.
-![image](img\pwm_module_wiring_diagram.drawio.png "pwm module wiring diagram") of i2c wiring schematic
+![image](img/pwm_module_wiring_diagram.drawio.png "pwm module wiring diagram") of i2c wiring schematic
 
 This is the relevant code in the `.\src\main.cpp` file to change if you need to alter the pwm module board layout. It it how the modules are when looking at the back of the section of 24x24 servos.
 ```cpp
