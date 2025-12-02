@@ -1,7 +1,7 @@
 # MirrorWall Project
 
 ## Assembly Instructions
-First assemble the Section Tile of 24x24 servos. Pay attention to the modules they each have a unique address that is configured by soldering the solder jumper pads on the board. Each `PCA9685` module controls 16 servos in a 8x2 configuration. The modules all need to be connected to the i2c bus. The physical connection order of the pwm modules does not matter because each module has a unique address. As long as the servos are in the correct output headers on the module. Typically the first thing connected to the i2c bus from the teensy4 is the adafruit i2c active termination module. This helps the i2c signl run longer and allow for lots of i2c devices to be connected.
+First assemble the Section Tile of 24x24 servos. Pay attention to the modules they each have a unique address that is configured by soldering the solder jumper pads on the board. Each `PCA9685` module controls 16 servos in a 8x2 configuration. The modules all need to be connected to the i2c bus. The physical connection order of the pwm modules does not matter because each module has a unique address. As long as the servos are in the correct output headers on the module. Typically the first thing connected to the i2c bus from the teensy4 is the adafruit i2c active termination module. This helps the i2c signal run longer and allow for lots of i2c devices to be connected.
 
 - [ ] connect all the servos to the modules
 - [ ] make sure the proper module order is maintained
@@ -63,6 +63,9 @@ Once the program is started press the Camera button (third one from the left) to
 ## Adjust the camera
 The intel Realsense SDK comes with a camera viewer application that can let you adjust camera settings. If you intend to make changes, I recommend First saving the current setings incase you want to return to them. Take note of the changes you make. You can turn on the camera preview by pressing on the camera toggle switch next to the camera name on the left panel of the window. Then there are values and sliders that can adjust various smoothing options. Some of these may be able to enhance the output.
 [image](camera viewer)
+
+## To run just the camera
+If you would like to run the camera software independently without send serial data you can run the `processing\TestingJustCamPixels\TestingJustCamPixels.pde` processing sketch.
 
 ## Servo Details:
 
