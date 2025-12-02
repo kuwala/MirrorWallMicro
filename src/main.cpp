@@ -42,8 +42,8 @@ Adafruit_PWMServoDriver pwmBoards[numPWMBoards];
 
 #define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
 
-int const rows = 2;
-int const cols = 8;
+int const rows = 24;
+int const cols = 24;
 int const rowsPerBoard = 2;
 int const colsPerBoard = 8;
 uint16_t servoValues[rows][cols]; // current values to set this update loop
@@ -60,33 +60,19 @@ byte servoBytes[rows][cols]; // read from serial
 // to pwmBoardNumber. 
 // first boardX = floor(x/colsPerBoard);
 // then boardY = floor(y/rowsPerBoard);
-// uint8_t boardMap[12][3] = {
-//   {0, 4, 8},
-//   {1, 5, 9},
-//   {2, 6, 10},
-//   {3, 7, 11},
-//   {12, 16, 20},
-//   {13, 17, 21},
-//   {14, 18, 22},
-//   {15, 19, 23},
-//   {24, 28, 32},
-//   {25, 29, 33},
-//   {26, 30, 34},
-//   {27, 31, 35},
-// };
 uint8_t boardMap[12][3] = {
   {0, 4, 8},
   {1, 5, 9},
   {2, 6, 10},
   {3, 7, 11},
-  {20, 16, 12},
-  {21, 17, 13},
-  {22, 18, 14},
-  {23, 19, 15},
-  {32, 28, 24},
-  {33, 29, 25},
-  {34, 30, 26},
-  {35, 31, 27},
+  {12, 16, 20},
+  {13, 17, 21},
+  {14, 18, 22},
+  {15, 19, 23},
+  {24, 28, 32},
+  {25, 29, 33},
+  {26, 30, 34},
+  {27, 31, 35},
 };
 
 uint8_t boardNumToYOffset[36] = {
